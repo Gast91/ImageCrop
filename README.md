@@ -12,6 +12,7 @@ A simple Windows command-line tool for cropping multi-monitor PNG "PrtScr" image
 
 ### In Progress
 * DocOpt Integration for better commandline arguments [Docopt](https://github.com/docopt/docopt.cpp)
+* Recursive directory search for croppable images
 * Other Image types
 
 ### Current Limitations
