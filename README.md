@@ -25,4 +25,4 @@ A simple Windows command-line tool for cropping multi-monitor PNG "PrtScr" image
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-The *unmodified* OpenCV library is used under the Apache 2.0 licence - see the [LICENSE.md](https://github.com/opencv/opencv/blob/master/LICENSE) for details
+\The *unmodified* OpenCV library is used under the Apache 2.0 licence - see the [LICENSE.md](https://github.com/opencv/opencv/blob/master/LICENSE) for details
