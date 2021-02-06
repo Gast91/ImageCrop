@@ -1,7 +1,6 @@
+#pragma once
 #include <filesystem>
-#include <string>
 #include <fstream>
-#include <iostream>
 #include <vector>
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
@@ -96,70 +95,4 @@ bool imageSizeEqualsExtDisplay(const fs::path& path)
 	size.height = ntohl(size.height);
 
 	return size == Monitor::systemDisplaySize;
-}
-
-int main(int argc, char* argv[])
-{
-#ifndef _DEBUG
-	if (argc == 3) // DOCOPT!
-	{
-		// TODO:
-		// docopt for arguments --> -verbose, -recursive, path is needed, display id optional (default primary monitor)
-		// spdlog?
-		// opencv as static rather than dll
-		// global vector...
-		// split into a monitor.h file?
-		std::string path = argv[1];
-		int cropDisplay = atoi(argv[2]);
-		const auto displayNum = GetSystemMetrics(SM_CMONITORS);
-		if (cropDisplay < 1 || cropDisplay > displayNum) { std::cout << "Invalid display ID\n"; return -1; }
-#else
-	std::string path = R"(D:\Desktop\test)";
-	const unsigned int cropDisplay = 1;
-#endif
-
-	if (!GetAllMonitorInfo()) return 1;
-	for (const auto& monitor : monitors)
-	{
-		std::cout << monitor.szDevice << ' ' << monitor.size << (monitor.isPrimary() ? " Primary\n" : "\n");
-		std::cout << "VirtualCoords: " << monitor.rcMonitor << "\nImageCoords: " << monitor.pixelSpaceCoords << '\n';
-	}
-	if (fs::exists(path) && fs::is_directory(path))
-	{
-		std::cout << "Scanning " << path << " ...\n";
-
-		unsigned int cropped = 0;
-		for (auto const& entry : fs::directory_iterator(path))
-		{
-			if (fs::is_regular_file(entry) && entry.path().extension() == ".png")
-			{
-				if (imageSizeEqualsExtDisplay(entry.path()))
-				{
-					try 
-					{
-						cv::Mat image = cv::imread(entry.path().string());
-						if (image.empty())
-						{
-							std::cout << "Cannot find/open image\n";
-							continue;
-						}
-						std::cout << "Cropping " << entry.path() << " ...";
-						cv::Mat croppedImage(image, monitors.at(cropDisplay - 1).getCVRect());
-						cv::imwrite(entry.path().string(), croppedImage);
-						std::cout << " Done\n";
-						++cropped;
-					}
-					catch (cv::Exception ex) { std::cout << '\n' << ex.what() << '\n'; }
-				}
-			}
-		}
-		std::cout << "Done, cropped " << cropped << "images!\n";
-	}
-	else std::cout << "Cannot find specified path/directory\n";
-#ifndef _DEBUG
-	}
-	else std::cout << "Invalid number of arguments\n";
-#else
-	std::cin.get();
-#endif
 }
