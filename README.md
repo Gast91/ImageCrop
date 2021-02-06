@@ -12,6 +12,7 @@ A simple Windows command-line tool for cropping multi-monitor PNG "PrtScr" image
 
 ### In Progress
 * DocOpt Integration for better commandline arguments [Docopt](https://github.com/docopt/docopt.cpp)
+* Recursive directory search for croppable images
 * Other Image types
 
 ### Current Limitations
@@ -24,4 +25,4 @@ A simple Windows command-line tool for cropping multi-monitor PNG "PrtScr" image
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-The *unmodified* OpenCV library is used under the Apache 2.0 licence - see the [LICENSE.md](https://github.com/opencv/opencv/blob/master/LICENSE) for details
+<br/>The *unmodified* OpenCV library is used under the Apache 2.0 licence - see the [LICENSE.md](https://github.com/opencv/opencv/blob/master/LICENSE) for details
