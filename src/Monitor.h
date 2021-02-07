@@ -88,6 +88,7 @@ BOOL GetAllMonitorInfo()
 	return result;
 }
 
+// ONLY FOR PNGs
 // Width is a 4Byte int starting at offset 16 in the file header. Height is the next one at position 20
 // Both in network order so an ntohl conversion to host order is needed (endian)
 bool imageSizeEqualsExtDisplay(const fs::path& path)

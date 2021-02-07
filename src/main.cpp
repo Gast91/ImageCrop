@@ -40,24 +40,24 @@ int main(int argc, char* argv[])
 	spdlog::info("Scanning {}", path);
 
 	unsigned int cropped = 0;
-	for (auto const& entry : fs::directory_iterator(path))  // if recursive do recursive_directory_iterator(path) - symlink?
-	{
+	auto crop = [&cropped, &cropDisplay](const auto& entry) {
 		const auto& entryPath = entry.path();
-		if (fs::is_regular_file(entry) && cv::haveImageReader(entryPath.string()) && imageSizeEqualsExtDisplay(entryPath)) // imageSizeEquals can only read the size of PNGs atm
-		{
-			try  {
-				cv::Mat image = cv::imread(entryPath.string());
+		if (!(fs::is_regular_file(entry) && cv::haveImageReader(entryPath.string()) && imageSizeEqualsExtDisplay(entryPath))) return;
+		try {
+			cv::Mat image = cv::imread(entryPath.string());
 
-				if (image.empty()) { spdlog::warn("Cannot find/read image {}, skipping", entryPath.string()); continue; }
+			if (image.empty()) { spdlog::warn("Cannot find/read image {}, skipping", entryPath.string()); return; }
 
-				spdlog::info("Cropping {} ...", entryPath.string());
-				cv::Mat croppedImage(image, monitors.at(static_cast<std::size_t>(cropDisplay - 1)).getCVRect());
-				if (!cv::imwrite(entryPath.string(), croppedImage)) spdlog::warn("Unable to crop {}, skipping", entryPath.string());
-				else ++cropped;
-			}
-			catch (const cv::Exception& ex) { spdlog::critical("{}", ex.what()); }
+			spdlog::info("Cropping {}", entryPath.string());
+			cv::Mat croppedImage(image, monitors.at(static_cast<std::size_t>(cropDisplay - 1)).getCVRect());
+			if (!cv::imwrite(entryPath.string(), croppedImage)) spdlog::warn("Unable to crop {}, skipping", entryPath.string());
+			else ++cropped;
 		}
-	}
+		catch (const cv::Exception& ex) { spdlog::critical("{}", ex.what()); /*???*/}
+	};
+	if (recursive) { for (const auto& entry : fs::recursive_directory_iterator(path)) crop(entry); }
+	else           { for (const auto& entry : fs::directory_iterator(path))           crop(entry); }
+
 	if (!verbose)    spdlog::set_level(spdlog::level::info);
 	if (cropped > 0) spdlog::info("Scan Complete, cropped {} images to fit {}!", cropped, monitors.at(static_cast<std::size_t>(cropDisplay - 1)).szDevice);
 	else             spdlog::info("Scan Complete, no images fit the crop criteria in {}", path);

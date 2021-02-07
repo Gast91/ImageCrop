@@ -1,5 +1,5 @@
 # ImageCrop
-A simple Windows command-line tool for cropping multi-monitor PNG "PrtScr" images down to a single monitor
+A simple Windows command-line tool for cropping multi-monitor **PNG** "PrtScrn" images down to a single monitor
 
 ## Getting Started
 
@@ -11,14 +11,14 @@ A simple Windows command-line tool for cropping multi-monitor PNG "PrtScr" image
 * Platform specific (Windows)
 
 ### Current Features
-* Crop all multi-monitor PNG Images (usually taken via a "PrtScr") in the specified directory dynamically based on the given monitor ID
+* Crop all multi-monitor **PNG** Images in the specified directory dynamically based on the given monitor ID.
+* -r for recursive directory search.
 
 ### In Progress
-* Recursive directory search for croppable images
-* Other Image types
 
 ### Current Limitations
-  N/A
+* Other Image types (instead of using opencv to load each image and check its size, a custom header reader **ONLY** for PNGs 
+<br/>is used to read just enough bytes to discern the size).
 
 ## Authors
 
