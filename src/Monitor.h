@@ -3,11 +3,12 @@
 #include <fstream>
 #include <vector>
 #define VC_EXTRALEAN
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN       
 #include <winsock.h>
-#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "Ws2_32.lib")      
 #include <Windows.h>
 #include "opencv2/opencv.hpp"
+#include "spdlog/fmt/ostr.h"
 
 namespace fs = std::filesystem;
 
@@ -40,24 +41,31 @@ struct Monitor : public MONITORINFOEXA
 
 	cv::Rect getCVRect() { return { pixelSpaceCoords.left, pixelSpaceCoords.top, size.width, size.height }; }
 
-	friend std::ostream& operator<<(std::ostream& os, const cv::Size& s)
+	template<typename Ostream>
+	friend Ostream& operator<<(Ostream& os, const cv::Size& s)
 	{
-		os << '[' << s.width << ',' << s.height << ']';
-		return os;
+		return os << '[' << s.width << ',' << s.height << ']';
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const RECT& coords)
+	template<typename Ostream>
+	friend Ostream& operator<<(Ostream& os, const RECT& coords)
 	{
-		os << '(' << coords.left << ',' << coords.top << ") (" << coords.right << ',' << coords.bottom << ')';
-		return os;
+		return os << '(' << coords.left << ',' << coords.top << ") (" << coords.right << ',' << coords.bottom << ')';
+	}
+
+	template<typename Ostream>
+	friend Ostream& operator<<(Ostream& os, const Monitor& monitor)
+	{
+		return os << monitor.szDevice << ' ' << monitor.size << (monitor.isPrimary() ? " Primary" : "") << "\n\tVirtualCoords: "
+			<< monitor.rcMonitor << "\n\tImageCoords: " << monitor.pixelSpaceCoords;
 	}
 
 }; long Monitor::minW = 0, Monitor::maxW = 0, Monitor::minH = 0, Monitor::maxH = 0; const cv::Size Monitor::systemDisplaySize{ GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN) };
 
-std::ostream& operator<<(std::ostream& os, const RECT coords)
+template<typename Ostream>
+Ostream& operator<<(Ostream& os, const RECT coords)
 {
-	os << '(' << coords.left << ',' << coords.top << ") (" << coords.right << ',' << coords.bottom << ')';
-	return os;
+	return os << '(' << coords.left << ',' << coords.top << ") (" << coords.right << ',' << coords.bottom << ')';
 }
 
 std::vector<Monitor> monitors;
