@@ -1,5 +1,5 @@
 #include "Monitor.h"
-#include "../vendor/docopt/docopt.h"
+#include "docopt/docopt.h"
 #include "spdlog/spdlog.h"
 
 static constexpr auto USAGE =  // MSVC's std::regex overflows the stack because of backtracking if USAGE is too big...
@@ -42,8 +42,10 @@ int main(int argc, char* argv[])
 	unsigned int cropped = 0;
 	auto crop = [&cropped, &cropDisplay](const auto& entry) {
 		const auto& entryPath = entry.path();
-		if (!(fs::is_regular_file(entry) && cv::haveImageReader(entryPath.string()) && imageSizeEqualsExtDisplay(entryPath))) return;
+		if (entry.is_directory()) spdlog::info("Scanning {}", entryPath.string());
+
 		try {
+			if (!(entry.is_regular_file() && cv::haveImageReader(entryPath.string()) && imageSizeEqualsExtDisplay(entryPath))) return;
 			cv::Mat image = cv::imread(entryPath.string());
 
 			if (image.empty()) { spdlog::warn("Cannot find/read image {}, skipping", entryPath.string()); return; }
@@ -53,7 +55,7 @@ int main(int argc, char* argv[])
 			if (!cv::imwrite(entryPath.string(), croppedImage)) spdlog::warn("Unable to crop {}, skipping", entryPath.string());
 			else ++cropped;
 		}
-		catch (const cv::Exception& ex) { spdlog::critical("{}", ex.what()); /*???*/}
+		catch (const std::exception& ex) { spdlog::critical("{}", ex.what()); }
 	};
 	if (recursive) { for (const auto& entry : fs::recursive_directory_iterator(path)) crop(entry); }
 	else           { for (const auto& entry : fs::directory_iterator(path))           crop(entry); }
@@ -61,4 +63,5 @@ int main(int argc, char* argv[])
 	if (!verbose)    spdlog::set_level(spdlog::level::info);
 	if (cropped > 0) spdlog::info("Scan Complete, cropped {} images to fit {}!", cropped, monitors.at(static_cast<std::size_t>(cropDisplay - 1)).szDevice);
 	else             spdlog::info("Scan Complete, no images fit the crop criteria in {}", path);
+	std::cin.get();
 }
