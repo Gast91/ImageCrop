@@ -1,6 +1,7 @@
 #include "Monitor.h"
 #include "docopt/docopt.h"
 #include "spdlog/spdlog.h"
+#include <clocale>
 
 static constexpr auto USAGE =  // MSVC's std::regex overflows the stack because of backtracking if USAGE is too big...
 R"(ImageCrop.
@@ -36,26 +37,31 @@ int main(int argc, char* argv[])
 
 	if (!GetAllMonitorInfo()) { spdlog::error("Unable to obtain monitor setup information");  return -1; }
 	for (const auto& monitor : monitors) spdlog::info("{}", monitor);  //verbose only
-	
+
+	// foreign character (multi byte) support - spdlog/console will still display them wrong
+	// but opencv will read/write (via fopen) to the file correctly
+	std::setlocale(LC_ALL, "en_US.UTF-8");
 	spdlog::info("Scanning {}", path);
 
 	unsigned int cropped = 0;
 	auto crop = [&cropped, &cropDisplay](const auto& entry) {
-		const auto& entryPath = entry.path();
-		if (entry.is_directory()) spdlog::info("Scanning {}", entryPath.string());
+		const auto& stringPath = entry.path().string();
+
+		if (entry.is_directory()) spdlog::info("Scanning {}", stringPath);
 
 		try {
-			if (!(entry.is_regular_file() && cv::haveImageReader(entryPath.string()) && imageSizeEqualsExtDisplay(entryPath))) return;
-			cv::Mat image = cv::imread(entryPath.string());
+			if (!(entry.is_regular_file() && cv::haveImageReader(stringPath) 
+				&& IC::imageSizeEqualsExtDisplay(entry.path(), Monitor::systemDisplaySize))) return;
 
-			if (image.empty()) { spdlog::warn("Cannot find/read image {}, skipping", entryPath.string()); return; }
+			cv::Mat image = cv::imread(stringPath);
+			if (image.empty()) { spdlog::warn("Cannot find/read image {}, skipping", stringPath); return; }
 
-			spdlog::info("Cropping {}", entryPath.string());
+			spdlog::info("Cropping {}", stringPath);
 			cv::Mat croppedImage(image, monitors.at(static_cast<std::size_t>(cropDisplay - 1)).getCVRect());
-			if (!cv::imwrite(entryPath.string(), croppedImage)) spdlog::warn("Unable to crop {}, skipping", entryPath.string());
+			if (!cv::imwrite(stringPath, croppedImage)) spdlog::warn("Unable to crop {}, skipping", stringPath);
 			else ++cropped;
 		}
-		catch (const std::exception& ex) { spdlog::critical("{}", ex.what()); }
+		catch (const std::exception& ex) { spdlog::critical("{} while processing {}", ex.what(), stringPath); }
 	};
 	if (recursive) { for (const auto& entry : fs::recursive_directory_iterator(path)) crop(entry); }
 	else           { for (const auto& entry : fs::directory_iterator(path))           crop(entry); }
@@ -63,5 +69,4 @@ int main(int argc, char* argv[])
 	if (!verbose)    spdlog::set_level(spdlog::level::info);
 	if (cropped > 0) spdlog::info("Scan Complete, cropped {} images to fit {}!", cropped, monitors.at(static_cast<std::size_t>(cropDisplay - 1)).szDevice);
 	else             spdlog::info("Scan Complete, no images fit the crop criteria in {}", path);
-	std::cin.get();
 }
